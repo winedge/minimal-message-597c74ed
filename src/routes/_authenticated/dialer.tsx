@@ -169,6 +169,14 @@ function DialerPage() {
       },
       onMuteChange: setMuted,
       onHoldChange: setHeld,
+      onTokenRefresh: async () => {
+        try {
+          const fresh: any = await getCreds();
+          return fresh?.token ?? null;
+        } catch {
+          return null;
+        }
+      },
     });
     softphoneRef.current = sp;
     sp.register({ token: c.token, identity: c.identity });
@@ -180,7 +188,10 @@ function DialerPage() {
       sp.stop();
       softphoneRef.current = null;
     };
-  }, [creds.data]);
+    // Rebuild only when the identity actually changes — never on a token
+    // refetch, which would destroy the device mid-call.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creds.data?.provisioned ? (creds.data as any).identity : null]);
 
   useEffect(() => {
     if (state === "registered") {
