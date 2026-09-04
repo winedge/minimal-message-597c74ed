@@ -39,7 +39,19 @@ function DialerPage() {
   const originate = useServerFn(originateCall);
   const hangup = useServerFn(hangupCall);
 
-  const creds = useQuery({ queryKey: ["sip-creds"], queryFn: () => getCreds() });
+  // Never auto-refetch: a new creds object would tear down and rebuild the
+  // Twilio Device, which kills an in-progress (ringing) call. Token renewal is
+  // handled in place via device.updateToken().
+  const creds = useQuery({
+    queryKey: ["sip-creds"],
+    queryFn: () => getCreds(),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    retry: 1,
+  });
   const fields = useQuery({
     queryKey: ["field-defs"],
     queryFn: async () => {
@@ -157,6 +169,14 @@ function DialerPage() {
       },
       onMuteChange: setMuted,
       onHoldChange: setHeld,
+      onTokenRefresh: async () => {
+        try {
+          const fresh: any = await getCreds();
+          return fresh?.token ?? null;
+        } catch {
+          return null;
+        }
+      },
     });
     softphoneRef.current = sp;
     sp.register({ token: c.token, identity: c.identity });
@@ -168,7 +188,10 @@ function DialerPage() {
       sp.stop();
       softphoneRef.current = null;
     };
-  }, [creds.data]);
+    // Rebuild only when the identity actually changes — never on a token
+    // refetch, which would destroy the device mid-call.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creds.data?.provisioned ? (creds.data as any).identity : null]);
 
   useEffect(() => {
     if (state === "registered") {

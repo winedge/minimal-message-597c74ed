@@ -24,6 +24,8 @@ export interface SoftphoneEvents {
   onEnded?: () => void;
   onMuteChange?: (muted: boolean) => void;
   onHoldChange?: (held: boolean) => void;
+  /** Fired shortly before the access token expires; return a fresh token. */
+  onTokenRefresh?: () => Promise<string | null | undefined>;
 }
 
 export class Softphone {
@@ -60,10 +62,16 @@ export class Softphone {
       this.device.on("error", (e: any) => {
         const msg = e?.message ?? String(e);
         this.events.onError?.(`Twilio device error: ${msg}`);
-        this.setState("failed");
+        // Don't drop an active call over a transient signaling error.
+        if (!this.activeCall) this.setState("failed");
       });
-      this.device.on("tokenWillExpire", () => {
-        console.warn("[softphone] Twilio access token will expire soon");
+      this.device.on("tokenWillExpire", async () => {
+        try {
+          const fresh = await this.events.onTokenRefresh?.();
+          if (fresh) this.device?.updateToken(fresh);
+        } catch (e) {
+          console.warn("[softphone] token refresh failed", e);
+        }
       });
       this.device.on("incoming", (call: Call) => this.handleIncoming(call));
       await this.device.register();
@@ -83,6 +91,14 @@ export class Softphone {
   }
 
   private handleIncoming(call: Call) {
+    // Drop a stale reference (a previous call that already closed) so a new
+    // inbound call isn't auto-rejected by a leftover activeCall.
+    const prevStatus = (() => {
+      try { return this.activeCall?.status?.(); } catch { return undefined; }
+    })();
+    if (this.activeCall && (prevStatus === "closed" || prevStatus === undefined)) {
+      this.activeCall = null;
+    }
     if (this.activeCall) {
       try { call.reject(); } catch {}
       return;
