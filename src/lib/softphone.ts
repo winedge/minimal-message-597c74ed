@@ -37,6 +37,8 @@ export class Softphone {
   private muted = false;
   private held = false;
   private holdProcessor: HoldMusicProcessor | null = null;
+  private wiredCalls = new WeakSet<Call>();
+  private tokenRefresh: Promise<void> | null = null;
 
   constructor(events: SoftphoneEvents = {}) {
     this.events = events;
@@ -57,21 +59,34 @@ export class Softphone {
         logLevel: "warn",
         closeProtection: true,
       });
-      this.device.on("registered", () => this.setState("registered"));
-      this.device.on("unregistered", () => this.setState("idle"));
+      this.device.on("registered", () => {
+        if (!this.activeCall) this.setState("registered");
+      });
+      this.device.on("unregistered", () => {
+        // Registration can briefly cycle while Twilio refreshes signaling.
+        // That must never reset or visually end an already established call.
+        if (!this.activeCall) this.setState("idle");
+      });
       this.device.on("error", (e: any) => {
         const msg = e?.message ?? String(e);
         this.events.onError?.(`Twilio device error: ${msg}`);
         // Don't drop an active call over a transient signaling error.
         if (!this.activeCall) this.setState("failed");
       });
-      this.device.on("tokenWillExpire", async () => {
-        try {
-          const fresh = await this.events.onTokenRefresh?.();
-          if (fresh) this.device?.updateToken(fresh);
-        } catch (e) {
-          console.warn("[softphone] token refresh failed", e);
-        }
+      this.device.on("tokenWillExpire", () => {
+        // Coalesce repeated expiry events. Updating the existing Device keeps
+        // its signaling/media session intact, including an active call.
+        if (this.tokenRefresh) return;
+        this.tokenRefresh = (async () => {
+          try {
+            const fresh = await this.events.onTokenRefresh?.();
+            if (fresh) this.device?.updateToken(fresh);
+          } catch (e) {
+            console.warn("[softphone] token refresh failed", e);
+          } finally {
+            this.tokenRefresh = null;
+          }
+        })();
       });
       this.device.on("incoming", (call: Call) => this.handleIncoming(call));
       await this.device.register();
@@ -159,18 +174,28 @@ export class Softphone {
   }
 
   private wireCall(call: Call) {
-    call.on("accept", () => this.setState("in_call"));
-    call.on("ringing", () => this.setState("calling"));
-    call.on("disconnect", () => this.cleanupCall());
-    call.on("cancel", () => this.cleanupCall());
-    call.on("reject", () => this.cleanupCall());
+    if (this.wiredCalls.has(call)) return;
+    this.wiredCalls.add(call);
+    call.on("accept", () => {
+      if (this.activeCall === call) this.setState("in_call");
+    });
+    call.on("ringing", () => {
+      if (this.activeCall === call) this.setState("calling");
+    });
+    call.on("disconnect", () => this.cleanupCall(call));
+    call.on("cancel", () => this.cleanupCall(call));
+    call.on("reject", () => this.cleanupCall(call));
     call.on("error", (e: any) => {
+      if (this.activeCall !== call) return;
       this.events.onError?.(`Call error: ${e?.message ?? e}`);
-      this.cleanupCall();
+      this.cleanupCall(call);
     });
   }
 
-  private cleanupCall() {
+  private cleanupCall(call: Call) {
+    // A delayed disconnect/cancel from a previous leg must not tear down a
+    // newer incoming call that has already replaced it.
+    if (this.activeCall !== call) return;
     this.activeCall = null;
     this.muted = false;
     this.held = false;
@@ -182,9 +207,10 @@ export class Softphone {
   }
 
   hangup() {
-    try { this.activeCall?.disconnect(); } catch {}
+    const call = this.activeCall;
+    try { call?.disconnect(); } catch {}
     try { this.device?.disconnectAll(); } catch {}
-    this.activeCall = null;
+    if (call && this.activeCall === call) this.cleanupCall(call);
   }
 
   toggleMute(): boolean {
