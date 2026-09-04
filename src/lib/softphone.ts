@@ -62,10 +62,16 @@ export class Softphone {
       this.device.on("error", (e: any) => {
         const msg = e?.message ?? String(e);
         this.events.onError?.(`Twilio device error: ${msg}`);
-        this.setState("failed");
+        // Don't drop an active call over a transient signaling error.
+        if (!this.activeCall) this.setState("failed");
       });
-      this.device.on("tokenWillExpire", () => {
-        console.warn("[softphone] Twilio access token will expire soon");
+      this.device.on("tokenWillExpire", async () => {
+        try {
+          const fresh = await this.events.onTokenRefresh?.();
+          if (fresh) this.device?.updateToken(fresh);
+        } catch (e) {
+          console.warn("[softphone] token refresh failed", e);
+        }
       });
       this.device.on("incoming", (call: Call) => this.handleIncoming(call));
       await this.device.register();
