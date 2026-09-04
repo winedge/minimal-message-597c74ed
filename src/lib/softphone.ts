@@ -91,6 +91,14 @@ export class Softphone {
   }
 
   private handleIncoming(call: Call) {
+    // Drop a stale reference (a previous call that already closed) so a new
+    // inbound call isn't auto-rejected by a leftover activeCall.
+    const prevStatus = (() => {
+      try { return this.activeCall?.status?.(); } catch { return undefined; }
+    })();
+    if (this.activeCall && (prevStatus === "closed" || prevStatus === undefined)) {
+      this.activeCall = null;
+    }
     if (this.activeCall) {
       try { call.reject(); } catch {}
       return;
