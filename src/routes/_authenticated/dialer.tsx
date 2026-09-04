@@ -39,7 +39,19 @@ function DialerPage() {
   const originate = useServerFn(originateCall);
   const hangup = useServerFn(hangupCall);
 
-  const creds = useQuery({ queryKey: ["sip-creds"], queryFn: () => getCreds() });
+  // Never auto-refetch: a new creds object would tear down and rebuild the
+  // Twilio Device, which kills an in-progress (ringing) call. Token renewal is
+  // handled in place via device.updateToken().
+  const creds = useQuery({
+    queryKey: ["sip-creds"],
+    queryFn: () => getCreds(),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    retry: 1,
+  });
   const fields = useQuery({
     queryKey: ["field-defs"],
     queryFn: async () => {
