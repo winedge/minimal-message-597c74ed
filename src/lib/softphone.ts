@@ -24,6 +24,8 @@ export interface SoftphoneEvents {
   onEnded?: () => void;
   onMuteChange?: (muted: boolean) => void;
   onHoldChange?: (held: boolean) => void;
+  /** Fired shortly before the access token expires; return a fresh token. */
+  onTokenRefresh?: () => Promise<string | null | undefined>;
 }
 
 export class Softphone {
