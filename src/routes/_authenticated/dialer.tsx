@@ -560,8 +560,13 @@ function DialerPage() {
           : disp === "NOANSWER" ? "No answer"
           : disp === "CONGESTION" ? "Network congestion"
           : disp === "CHANUNAVAIL" ? "Customer unreachable"
+          : disp === "BLOCKED" ? "This number is blocked by the phone carrier and can't be called"
+          : disp === "INVALID" ? "This number doesn't exist"
           : disp ? `Call failed (${disp})` : "Call did not connect";
-        setCallProgress({ label: nice, kind: "failed" });
+        setCallProgress((prev) => {
+          if (s === "failed" && prev?.label !== nice) toast.error(nice);
+          return { label: nice, kind: "failed" };
+        });
         setDialMessage(nice);
         // Do NOT force-hangup the softphone here — the Twilio SDK fires its
         // own `disconnect` event when the media leg actually ends, and that
