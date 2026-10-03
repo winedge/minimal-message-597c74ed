@@ -162,3 +162,81 @@ export const syncTwilioTwimlApp = createServerFn({ method: "POST" })
       status_callback: json.status_callback ?? statusUrl,
     };
   });
+
+
+// ---- Buy numbers ----
+export const searchTwilioAvailableNumbers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        country: z.string().trim().length(2).toUpperCase(),
+        type: z.enum(["Local", "TollFree"]).default("Local"),
+        areaCode: z.string().trim().regex(/^\d{3}$/).optional().or(z.literal("")),
+        contains: z.string().trim().regex(/^[0-9*]{1,10}$/).optional().or(z.literal("")),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { sid, header } = twilioAuth();
+    const qs = new URLSearchParams({ VoiceEnabled: "true", PageSize: "20" });
+    if (data.areaCode) qs.set("AreaCode", data.areaCode);
+    if (data.contains) qs.set("Contains", data.contains);
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${sid}/AvailablePhoneNumbers/${data.country}/${data.type}.json?${qs}`,
+      { headers: { Authorization: header, Accept: "application/json" } },
+    );
+    if (!res.ok) throw new Error(`Twilio API ${res.status}: ${await res.text()}`);
+    const json: any = await res.json();
+    return (json.available_phone_numbers ?? []).map((n: any) => ({
+      phone_number: n.phone_number as string,
+      friendly_name: (n.friendly_name ?? n.phone_number) as string,
+      locality: (n.locality ?? null) as string | null,
+      region: (n.region ?? null) as string | null,
+    }));
+  });
+
+export const buyTwilioNumber = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        phone_number: z.string().trim().regex(/^\+[1-9]\d{6,14}$/, "Use E.164 e.g. +14155551234"),
+        label: z.string().trim().max(64).optional().nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { sid, header } = twilioAuth();
+    const body = new URLSearchParams({ PhoneNumber: data.phone_number });
+    if (data.label) body.set("FriendlyName", data.label);
+    const base = (process.env.PUBLIC_WEBHOOK_BASE_URL ?? "").replace(/\/$/, "");
+    if (base) {
+      body.set("VoiceUrl", `${base}/api/public/twilio-inbound`);
+      body.set("VoiceMethod", "POST");
+      body.set("StatusCallback", `${base}/api/public/twilio-status`);
+      body.set("StatusCallbackMethod", "POST");
+    }
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/IncomingPhoneNumbers.json`, {
+      method: "POST",
+      headers: {
+        Authorization: header,
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+      },
+      body,
+    });
+    if (!res.ok) {
+      let msg = await res.text();
+      try { msg = JSON.parse(msg).message ?? msg; } catch { /* keep raw */ }
+      throw new Error(`Twilio ${res.status}: ${msg}`);
+    }
+    const json: any = await res.json();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("outbound_dids")
+      .upsert({ phone_number: json.phone_number, label: data.label ?? null }, { onConflict: "phone_number" });
+    return { sid: json.sid as string, phone_number: json.phone_number as string, webhooksConfigured: !!base };
+  });
