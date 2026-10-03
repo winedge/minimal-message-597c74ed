@@ -26,10 +26,13 @@ function AuthPage() {
     setError(null);
     setInfo(null);
     if (mode === "signin") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       setBusy(false);
       if (error) setError(error.message);
-      else navigate({ to: "/dialer", replace: true });
+      else {
+        if (data.user) void prefetchRole(data.user.id);
+        navigate({ to: "/dialer", replace: true });
+      }
     } else {
       const { data, error } = await supabase.auth.signUp({
         email,

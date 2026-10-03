@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedShell() {
   const session = useSession();
-  const { role, loading } = useRole();
+  const { role, loading } = useRole(session);
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
