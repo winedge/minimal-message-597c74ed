@@ -9,63 +9,88 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedDialerRouteImport } from './routes/_authenticated/dialer'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
-import { Route as AuthenticatedAdminAgentsRouteImport } from './routes/_authenticated/admin/agents'
-import { Route as AuthenticatedAdminCallsRouteImport } from './routes/_authenticated/admin/calls'
-import { Route as AuthenticatedAdminContactsRouteImport } from './routes/_authenticated/admin/contacts'
-import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin/fields'
-import { Route as AuthenticatedAdminInboundRouteImport } from './routes/_authenticated/admin/inbound'
-import { Route as AuthenticatedAdminLiveRouteImport } from './routes/_authenticated/admin/live'
-import { Route as AuthenticatedAdminOutboundRouteImport } from './routes/_authenticated/admin/outbound'
-import { Route as ApiPublicAsteriskEventsRouteImport } from './routes/api/public/asterisk-events'
-import { Route as ApiPublicInboundRouteRouteImport } from './routes/api/public/inbound-route'
-import { Route as ApiPublicTwilioInboundRouteImport } from './routes/api/public/twilio-inbound'
-import { Route as ApiPublicTwilioStatusRouteImport } from './routes/api/public/twilio-status'
+import { Route as AuthenticatedDialerRouteImport } from './routes/_authenticated/dialer'
 import { Route as ApiPublicTwilioVoiceRouteImport } from './routes/api/public/twilio-voice'
+import { Route as ApiPublicTwilioStatusRouteImport } from './routes/api/public/twilio-status'
+import { Route as ApiPublicTwilioInboundRouteImport } from './routes/api/public/twilio-inbound'
+import { Route as ApiPublicInboundRouteRouteImport } from './routes/api/public/inbound-route'
+import { Route as ApiPublicAsteriskEventsRouteImport } from './routes/api/public/asterisk-events'
+import { Route as AuthenticatedAdminOutboundRouteImport } from './routes/_authenticated/admin/outbound'
+import { Route as AuthenticatedAdminLiveRouteImport } from './routes/_authenticated/admin/live'
+import { Route as AuthenticatedAdminInboundRouteImport } from './routes/_authenticated/admin/inbound'
+import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin/fields'
+import { Route as AuthenticatedAdminContactsRouteImport } from './routes/_authenticated/admin/contacts'
+import { Route as AuthenticatedAdminCallsRouteImport } from './routes/_authenticated/admin/calls'
+import { Route as AuthenticatedAdminAgentsRouteImport } from './routes/_authenticated/admin/agents'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedDialerRoute = AuthenticatedDialerRouteImport.update({
-  id: '/dialer',
-  path: '/dialer',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminAgentsRoute =
-  AuthenticatedAdminAgentsRouteImport.update({
-    id: '/admin/agents',
-    path: '/admin/agents',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminCallsRoute = AuthenticatedAdminCallsRouteImport.update({
-  id: '/admin/calls',
-  path: '/admin/calls',
+const AuthenticatedDialerRoute = AuthenticatedDialerRouteImport.update({
+  id: '/dialer',
+  path: '/dialer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminContactsRoute =
-  AuthenticatedAdminContactsRouteImport.update({
-    id: '/admin/contacts',
-    path: '/admin/contacts',
+const ApiPublicTwilioVoiceRoute = ApiPublicTwilioVoiceRouteImport.update({
+  id: '/api/public/twilio-voice',
+  path: '/api/public/twilio-voice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTwilioStatusRoute = ApiPublicTwilioStatusRouteImport.update({
+  id: '/api/public/twilio-status',
+  path: '/api/public/twilio-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTwilioInboundRoute = ApiPublicTwilioInboundRouteImport.update({
+  id: '/api/public/twilio-inbound',
+  path: '/api/public/twilio-inbound',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicInboundRouteRoute = ApiPublicInboundRouteRouteImport.update({
+  id: '/api/public/inbound-route',
+  path: '/api/public/inbound-route',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAsteriskEventsRoute = ApiPublicAsteriskEventsRouteImport.update({
+  id: '/api/public/asterisk-events',
+  path: '/api/public/asterisk-events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminOutboundRoute =
+  AuthenticatedAdminOutboundRouteImport.update({
+    id: '/admin/outbound',
+    path: '/admin/outbound',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminLiveRoute = AuthenticatedAdminLiveRouteImport.update({
+  id: '/admin/live',
+  path: '/admin/live',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminInboundRoute =
+  AuthenticatedAdminInboundRouteImport.update({
+    id: '/admin/inbound',
+    path: '/admin/inbound',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminFieldsRoute =
@@ -74,48 +99,23 @@ const AuthenticatedAdminFieldsRoute =
     path: '/admin/fields',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminInboundRoute =
-  AuthenticatedAdminInboundRouteImport.update({
-    id: '/admin/inbound',
-    path: '/admin/inbound',
+const AuthenticatedAdminContactsRoute =
+  AuthenticatedAdminContactsRouteImport.update({
+    id: '/admin/contacts',
+    path: '/admin/contacts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminLiveRoute = AuthenticatedAdminLiveRouteImport.update({
-  id: '/admin/live',
-  path: '/admin/live',
+const AuthenticatedAdminCallsRoute = AuthenticatedAdminCallsRouteImport.update({
+  id: '/admin/calls',
+  path: '/admin/calls',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminOutboundRoute =
-  AuthenticatedAdminOutboundRouteImport.update({
-    id: '/admin/outbound',
-    path: '/admin/outbound',
+const AuthenticatedAdminAgentsRoute =
+  AuthenticatedAdminAgentsRouteImport.update({
+    id: '/admin/agents',
+    path: '/admin/agents',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicAsteriskEventsRoute = ApiPublicAsteriskEventsRouteImport.update({
-  id: '/api/public/asterisk-events',
-  path: '/api/public/asterisk-events',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicInboundRouteRoute = ApiPublicInboundRouteRouteImport.update({
-  id: '/api/public/inbound-route',
-  path: '/api/public/inbound-route',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicTwilioInboundRoute = ApiPublicTwilioInboundRouteImport.update({
-  id: '/api/public/twilio-inbound',
-  path: '/api/public/twilio-inbound',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicTwilioStatusRoute = ApiPublicTwilioStatusRouteImport.update({
-  id: '/api/public/twilio-status',
-  path: '/api/public/twilio-status',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicTwilioVoiceRoute = ApiPublicTwilioVoiceRouteImport.update({
-  id: '/api/public/twilio-voice',
-  path: '/api/public/twilio-voice',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -244,11 +244,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -258,19 +258,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/dialer': {
-      id: '/_authenticated/dialer'
-      path: '/dialer'
-      fullPath: '/dialer'
-      preLoaderRoute: typeof AuthenticatedDialerRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/history': {
       id: '/_authenticated/history'
@@ -279,74 +272,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/agents': {
-      id: '/_authenticated/admin/agents'
-      path: '/admin/agents'
-      fullPath: '/admin/agents'
-      preLoaderRoute: typeof AuthenticatedAdminAgentsRouteImport
+    '/_authenticated/dialer': {
+      id: '/_authenticated/dialer'
+      path: '/dialer'
+      fullPath: '/dialer'
+      preLoaderRoute: typeof AuthenticatedDialerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/calls': {
-      id: '/_authenticated/admin/calls'
-      path: '/admin/calls'
-      fullPath: '/admin/calls'
-      preLoaderRoute: typeof AuthenticatedAdminCallsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/contacts': {
-      id: '/_authenticated/admin/contacts'
-      path: '/admin/contacts'
-      fullPath: '/admin/contacts'
-      preLoaderRoute: typeof AuthenticatedAdminContactsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/fields': {
-      id: '/_authenticated/admin/fields'
-      path: '/admin/fields'
-      fullPath: '/admin/fields'
-      preLoaderRoute: typeof AuthenticatedAdminFieldsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/inbound': {
-      id: '/_authenticated/admin/inbound'
-      path: '/admin/inbound'
-      fullPath: '/admin/inbound'
-      preLoaderRoute: typeof AuthenticatedAdminInboundRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/live': {
-      id: '/_authenticated/admin/live'
-      path: '/admin/live'
-      fullPath: '/admin/live'
-      preLoaderRoute: typeof AuthenticatedAdminLiveRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/outbound': {
-      id: '/_authenticated/admin/outbound'
-      path: '/admin/outbound'
-      fullPath: '/admin/outbound'
-      preLoaderRoute: typeof AuthenticatedAdminOutboundRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/public/asterisk-events': {
-      id: '/api/public/asterisk-events'
-      path: '/api/public/asterisk-events'
-      fullPath: '/api/public/asterisk-events'
-      preLoaderRoute: typeof ApiPublicAsteriskEventsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/inbound-route': {
-      id: '/api/public/inbound-route'
-      path: '/api/public/inbound-route'
-      fullPath: '/api/public/inbound-route'
-      preLoaderRoute: typeof ApiPublicInboundRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio-inbound': {
-      id: '/api/public/twilio-inbound'
-      path: '/api/public/twilio-inbound'
-      fullPath: '/api/public/twilio-inbound'
-      preLoaderRoute: typeof ApiPublicTwilioInboundRouteImport
+    '/api/public/twilio-voice': {
+      id: '/api/public/twilio-voice'
+      path: '/api/public/twilio-voice'
+      fullPath: '/api/public/twilio-voice'
+      preLoaderRoute: typeof ApiPublicTwilioVoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/twilio-status': {
@@ -356,12 +293,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTwilioStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/twilio-voice': {
-      id: '/api/public/twilio-voice'
-      path: '/api/public/twilio-voice'
-      fullPath: '/api/public/twilio-voice'
-      preLoaderRoute: typeof ApiPublicTwilioVoiceRouteImport
+    '/api/public/twilio-inbound': {
+      id: '/api/public/twilio-inbound'
+      path: '/api/public/twilio-inbound'
+      fullPath: '/api/public/twilio-inbound'
+      preLoaderRoute: typeof ApiPublicTwilioInboundRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/inbound-route': {
+      id: '/api/public/inbound-route'
+      path: '/api/public/inbound-route'
+      fullPath: '/api/public/inbound-route'
+      preLoaderRoute: typeof ApiPublicInboundRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/asterisk-events': {
+      id: '/api/public/asterisk-events'
+      path: '/api/public/asterisk-events'
+      fullPath: '/api/public/asterisk-events'
+      preLoaderRoute: typeof ApiPublicAsteriskEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin/outbound': {
+      id: '/_authenticated/admin/outbound'
+      path: '/admin/outbound'
+      fullPath: '/admin/outbound'
+      preLoaderRoute: typeof AuthenticatedAdminOutboundRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/live': {
+      id: '/_authenticated/admin/live'
+      path: '/admin/live'
+      fullPath: '/admin/live'
+      preLoaderRoute: typeof AuthenticatedAdminLiveRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/inbound': {
+      id: '/_authenticated/admin/inbound'
+      path: '/admin/inbound'
+      fullPath: '/admin/inbound'
+      preLoaderRoute: typeof AuthenticatedAdminInboundRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/fields': {
+      id: '/_authenticated/admin/fields'
+      path: '/admin/fields'
+      fullPath: '/admin/fields'
+      preLoaderRoute: typeof AuthenticatedAdminFieldsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/contacts': {
+      id: '/_authenticated/admin/contacts'
+      path: '/admin/contacts'
+      fullPath: '/admin/contacts'
+      preLoaderRoute: typeof AuthenticatedAdminContactsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/calls': {
+      id: '/_authenticated/admin/calls'
+      path: '/admin/calls'
+      fullPath: '/admin/calls'
+      preLoaderRoute: typeof AuthenticatedAdminCallsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/agents': {
+      id: '/_authenticated/admin/agents'
+      path: '/admin/agents'
+      fullPath: '/admin/agents'
+      preLoaderRoute: typeof AuthenticatedAdminAgentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }

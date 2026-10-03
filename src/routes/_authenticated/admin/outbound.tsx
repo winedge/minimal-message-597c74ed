@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { listTelnyxNumbers } from "@/lib/telnyx.functions";
-import { listTwilioNumbers, syncTwilioWebhooks, syncTwilioTwimlApp } from "@/lib/twilio.functions";
+import { listTwilioNumbers, syncTwilioWebhooks, syncTwilioTwimlApp, searchTwilioAvailableNumbers, buyTwilioNumber } from "@/lib/twilio.functions";
 import { upsertOutboundDid, deleteOutboundDid } from "@/lib/outbound.functions";
 import { toast } from "sonner";
 
@@ -28,6 +28,34 @@ function OutboundPage() {
   const fetchTwilio = useServerFn(listTwilioNumbers);
   const syncHooks = useServerFn(syncTwilioWebhooks);
   const syncApp = useServerFn(syncTwilioTwimlApp);
+
+  const searchFn = useServerFn(searchTwilioAvailableNumbers);
+  const buyFn = useServerFn(buyTwilioNumber);
+  const [bCountry, setBCountry] = useState("US");
+  const [bType, setBType] = useState<"Local" | "TollFree">("Local");
+  const [bArea, setBArea] = useState("");
+  const [bContains, setBContains] = useState("");
+  const [results, setResults] = useState<{ phone_number: string; friendly_name: string; locality: string | null; region: string | null }[] | null>(null);
+
+  const search = useMutation({
+    mutationFn: () => searchFn({ data: { country: bCountry, type: bType, areaCode: bArea, contains: bContains } }),
+    onSuccess: (r) => {
+      setResults(r);
+      if (r.length === 0) toast.info("No numbers found. Try a different area code.");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Search failed"),
+  });
+
+  const buy = useMutation({
+    mutationFn: (n: string) => buyFn({ data: { phone_number: n } }),
+    onSuccess: (r) => {
+      toast.success(`Purchased ${r.phone_number}${r.webhooksConfigured ? "" : " (webhooks not set — use Sync webhooks)"}`);
+      setResults((cur) => (cur ?? []).filter((x) => x.phone_number !== r.phone_number));
+      qc.invalidateQueries({ queryKey: ["outbound_dids"] });
+      qc.invalidateQueries({ queryKey: ["twilio-numbers"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Purchase failed"),
+  });
 
   const [selected, setSelected] = useState("");
   const [label, setLabel] = useState("");
@@ -207,6 +235,62 @@ function OutboundPage() {
             </Button>
           </div>
         </div>
+      </div>
+
+      <div className="rounded border p-4 space-y-3">
+        <h2 className="font-medium">Buy a new number (Twilio)</h2>
+        <p className="text-xs text-muted-foreground">
+          Search available numbers and purchase one. Twilio charges your account monthly for each number.
+        </p>
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+          <div>
+            <Label>Country</Label>
+            <Input value={bCountry} maxLength={2} onChange={(e) => setBCountry(e.target.value.toUpperCase())} placeholder="US" />
+          </div>
+          <div>
+            <Label>Type</Label>
+            <select className="w-full rounded border bg-background px-2 py-2 text-sm" value={bType} onChange={(e) => setBType(e.target.value as any)}>
+              <option value="Local">Local</option>
+              <option value="TollFree">Toll-free</option>
+            </select>
+          </div>
+          <div>
+            <Label>Area code</Label>
+            <Input value={bArea} maxLength={3} inputMode="numeric" onChange={(e) => setBArea(e.target.value.replace(/\D/g, ""))} placeholder="415" />
+          </div>
+          <div>
+            <Label>Contains digits</Label>
+            <Input value={bContains} maxLength={10} onChange={(e) => setBContains(e.target.value.replace(/[^0-9*]/g, ""))} placeholder="777" />
+          </div>
+          <div className="flex items-end">
+            <Button onClick={() => search.mutate()} disabled={bCountry.length !== 2 || search.isPending}>
+              {search.isPending ? "Searching…" : "Search"}
+            </Button>
+          </div>
+        </div>
+        {results && results.length > 0 && (
+          <ul className="divide-y rounded border">
+            {results.map((n) => (
+              <li key={n.phone_number} className="flex items-center justify-between gap-2 p-2 text-sm">
+                <div>
+                  <span className="font-mono">{n.phone_number}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {[n.locality, n.region].filter(Boolean).join(", ")}
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  disabled={buy.isPending}
+                  onClick={() => {
+                    if (window.confirm(`Buy ${n.phone_number}? Twilio will charge your account for this number.`)) buy.mutate(n.phone_number);
+                  }}
+                >
+                  {buy.isPending && buy.variables === n.phone_number ? "Buying…" : "Buy"}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="rounded border">
