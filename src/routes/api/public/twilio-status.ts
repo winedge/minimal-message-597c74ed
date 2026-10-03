@@ -42,8 +42,16 @@ export const Route = createFileRoute("/api/public/twilio-status")({
           patch.disposition = "NOANSWER";
           patch.ended_at = new Date().toISOString();
         } else if (evt === "failed" || evt === "canceled") {
+          const errorCode = String(form.get("ErrorCode") ?? "");
+          const sipCode = String(form.get("SipResponseCode") ?? "");
           patch.status = "failed";
-          patch.disposition = evt.toUpperCase();
+          // 13225 = Twilio refuses to dial this number (blocklisted / high-risk).
+          patch.disposition =
+            evt === "failed" && (errorCode === "13225" || sipCode === "603")
+              ? "BLOCKED"
+              : evt === "failed" && sipCode === "404"
+                ? "INVALID"
+                : evt.toUpperCase();
           patch.ended_at = new Date().toISOString();
         }
 
