@@ -1,6 +1,7 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate, useRouter, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { prefetchRole } from "@/hooks/use-role";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,11 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const router = useRouter();
+  // Download the dialer page in the background while the agent types.
+  useEffect(() => {
+    void router.preloadRoute({ to: "/dialer" }).catch(() => {});
+  }, [router]);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,10 +32,13 @@ function AuthPage() {
     setError(null);
     setInfo(null);
     if (mode === "signin") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       setBusy(false);
       if (error) setError(error.message);
-      else navigate({ to: "/dialer", replace: true });
+      else {
+        if (data.user) void prefetchRole(data.user.id);
+        navigate({ to: "/dialer", replace: true });
+      }
     } else {
       const { data, error } = await supabase.auth.signUp({
         email,

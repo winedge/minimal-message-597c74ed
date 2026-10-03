@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRole, useSession } from "@/hooks/use-role";
+import { useRole, useSession, clearRoleCache } from "@/hooks/use-role";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { claimFirstAdmin } from "@/lib/admin.functions";
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedShell() {
   const session = useSession();
-  const { role, loading } = useRole();
+  const { role, loading } = useRole(session);
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -73,6 +73,7 @@ function AuthenticatedShell() {
   const initials = (session.email ?? "?").slice(0, 2).toUpperCase();
 
   const signOut = async () => {
+    clearRoleCache();
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   };
