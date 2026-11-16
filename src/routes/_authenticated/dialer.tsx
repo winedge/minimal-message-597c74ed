@@ -618,6 +618,19 @@ function DialerPage() {
   }, [activeChannel, dial, handleKey, inCall, phone]);
 
   if (creds.isLoading) return <p className="text-muted-foreground">Loading softphone…</p>;
+  if (creds.isError) {
+    return (
+      <div className="space-y-3 rounded border p-6">
+        <h2 className="text-lg font-semibold">Phone setup unavailable</h2>
+        <p className="text-sm text-muted-foreground">
+          {creds.error instanceof Error ? creds.error.message : "Phone credentials could not be loaded."}
+        </p>
+        <Button onClick={() => void creds.refetch()} disabled={creds.isFetching}>
+          {creds.isFetching ? "Retrying…" : "Retry"}
+        </Button>
+      </div>
+    );
+  }
   if (creds.data && creds.data.provisioned === false) {
     return (
       <div className="rounded border p-6">

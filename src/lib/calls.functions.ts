@@ -68,11 +68,12 @@ export const getSipCredentials = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("sip_endpoints")
       .select("extension")
       .eq("user_id", context.userId)
       .maybeSingle();
+    if (error) throw new Error(`Could not load your phone extension: ${error.message}`);
     if (!data) {
       return {
         provisioned: false as const,
