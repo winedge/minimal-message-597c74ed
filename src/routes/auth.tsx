@@ -46,7 +46,7 @@ function AuthPage() {
           supabase.auth.signInWithPassword({ email, password }),
           timeout,
         ]);
-        if (error) setError(error.message);
+        if (error) setError(formatAuthError(error.message));
         else {
           if (data.user) void prefetchRole(data.user.id);
           void navigate({ to: "/dialer", replace: true });
@@ -60,17 +60,13 @@ function AuthPage() {
           }),
           timeout,
         ]);
-        if (error) setError(error.message);
+        if (error) setError(formatAuthError(error.message));
         else if (data.session) void navigate({ to: "/dialer", replace: true });
         else setInfo("Account created. Check your email to confirm, or sign in if confirmation is disabled.");
       }
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Unable to sign in. Please try again.";
-      setError(
-        message.toLowerCase().includes("failed to fetch")
-          ? "Could not reach the sign-in service. Please try again."
-          : message,
-      );
+      setError(formatAuthError(message));
     } finally {
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
       setBusy(false);
@@ -100,4 +96,10 @@ function AuthPage() {
       </form>
     </div>
   );
+}
+
+function formatAuthError(message: string) {
+  return message.toLowerCase().includes("failed to fetch")
+    ? "Could not reach the sign-in service. Please try again."
+    : message;
 }
