@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Mint Twilio Voice access tokens with the Web Crypto API inside the server function rather than the Twilio Node SDK, because the server runs in an edge runtime.

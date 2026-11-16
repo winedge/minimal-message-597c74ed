@@ -37,16 +37,26 @@ export const createAgent = createServerFn({ method: "POST" })
 
     const userId = created.user.id;
 
-    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "agent" });
+    const { error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: userId, role: "agent" });
+    if (roleError) {
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      throw new Error(`Agent role setup failed: ${roleError.message}`);
+    }
 
     const sipUsername = `agent_${data.extension}`;
     const sipPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 24);
-    await supabaseAdmin.from("sip_endpoints").insert({
+    const { error: sipError } = await supabaseAdmin.from("sip_endpoints").insert({
       user_id: userId,
       sip_username: sipUsername,
       sip_password_encrypted: encryptSecret(sipPassword),
       extension: data.extension,
     });
+    if (sipError) {
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      throw new Error(`Phone extension setup failed: ${sipError.message}`);
+    }
 
     // Return credentials once so admin can configure Asterisk / share with agent.
     return { userId, sipUsername, sipPassword, extension: data.extension };
