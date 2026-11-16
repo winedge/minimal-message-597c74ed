@@ -28,27 +28,52 @@ function AuthPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError(null);
     setInfo(null);
-    if (mode === "signin") {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      setBusy(false);
-      if (error) setError(error.message);
-      else {
-        if (data.user) void prefetchRole(data.user.id);
-        navigate({ to: "/dialer", replace: true });
+    let timeoutId: number | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = window.setTimeout(
+        () => reject(new Error("Sign-in timed out. Please check your connection and try again.")),
+        20000,
+      );
+    });
+
+    try {
+      if (mode === "signin") {
+        const { data, error } = await Promise.race([
+          supabase.auth.signInWithPassword({ email, password }),
+          timeout,
+        ]);
+        if (error) setError(error.message);
+        else {
+          if (data.user) void prefetchRole(data.user.id);
+          void navigate({ to: "/dialer", replace: true });
+        }
+      } else {
+        const { data, error } = await Promise.race([
+          supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: window.location.origin },
+          }),
+          timeout,
+        ]);
+        if (error) setError(error.message);
+        else if (data.session) void navigate({ to: "/dialer", replace: true });
+        else setInfo("Account created. Check your email to confirm, or sign in if confirmation is disabled.");
       }
-    } else {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: window.location.origin },
-      });
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "Unable to sign in. Please try again.";
+      setError(
+        message.toLowerCase().includes("failed to fetch")
+          ? "Could not reach the sign-in service. Please try again."
+          : message,
+      );
+    } finally {
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
       setBusy(false);
-      if (error) return setError(error.message);
-      if (data.session) navigate({ to: "/dialer", replace: true });
-      else setInfo("Account created. Check your email to confirm, or sign in if confirmation is disabled.");
     }
   }
 
